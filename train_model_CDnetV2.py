@@ -77,7 +77,7 @@ SPLIT_ID = './splits/voc/split_0.pkl'
 
 MODEL = 'DeepLab'
 BATCH_SIZE = 16
-NUM_STEPS = 30000
+NUM_STEPS = 80000
 SAVE_PRED_EVERY = 5000
 
 INPUT_SIZE = '321,321'
@@ -85,7 +85,7 @@ IGNORE_LABEL = 255 # 255 for PASCAL-VOC / -1 for PASCAL-Context / 250 for Citysc
 
 RESTORE_FROM = '/home/lab532/Remote_sensing/Unsupervised_SemSeg_master/pretrained_models/resnet50-19c8e357.pth'
 
-LEARNING_RATE = 1e-6
+LEARNING_RATE = 1e-4
 LEARNING_RATE_D = 1e-4
 
 POWER = 0.9
