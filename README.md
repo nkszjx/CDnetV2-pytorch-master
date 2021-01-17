@@ -4,8 +4,11 @@ If you find CDnetv2 useful in your research, please consider citing:
 
 @ARTICLE{8681238,
 author={J. {Yang} and J. {Guo} and H. {Yue} and Z. {Liu} and H. {Hu} and K. {Li}},
+
 journal={IEEE Transactions on Geoscience and Remote Sensing},
+
 title={CDnet: CNN-Based Cloud Detection for Remote Sensing Imagery},
+
 year={2019},
 volume={57},
 number={8},
