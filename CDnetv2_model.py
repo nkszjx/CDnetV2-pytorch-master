@@ -566,7 +566,7 @@ class CDnetV2_MODEL(nn.Module):
 		
         self.layerx_1 = Res_block_1(64, 64, stride=1, dilation=1)
         self.layerx_2 = Res_block_2(256, 64, stride=1, dilation=1)
-        self.layerx_3 = Res_block_3(256, 64, stride=2, dilation=1)	
+        self.layerx_3 = Res_block_3(256, 64, stride=1, dilation=1)	
 		
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
