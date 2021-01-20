@@ -3,7 +3,7 @@
 """
 This is the implementation of DeepLabv3+ without multi-scale inputs. This implementation uses ResNet-101 by default.
 """
-
+#nn.GroupNorm
 
 import torch
 from torch import nn
@@ -117,25 +117,25 @@ class Res_block_1(nn.Module):
 		
         self.conv1 = nn.Sequential(
                 nn.Conv2d(inplanes, planes, kernel_size=1, stride=1, bias=False) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))	
 				
         self.conv2 = nn.Sequential(
                 nn.Conv2d(planes, planes, kernel_size=3, stride=1, 
                                padding=1, bias=False, dilation = 1) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))		
 
         self.conv3 = nn.Sequential(
                 nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False) ,
-                nn.BatchNorm2d(planes * 4,affine = affine_par))					
+                nn.GroupNorm(8,planes * 4))			
 		
         self.relu = nn.ReLU(inplace=True)
 
         self.down_sample = nn.Sequential(
                 nn.Conv2d(inplanes, planes * 4,
                           kernel_size=1, stride=1, bias=False),
-                nn.BatchNorm2d(planes * 4,affine = affine_par))		
+                nn.GroupNorm(8,planes * 4))		
 		
 		
 
@@ -161,18 +161,18 @@ class Res_block_2(nn.Module):
 		
         self.conv1 = nn.Sequential(
                 nn.Conv2d(inplanes, planes, kernel_size=1, stride=1, bias=False) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))	
 				
         self.conv2 = nn.Sequential(
                 nn.Conv2d(planes, planes, kernel_size=3, stride=1, 
                                padding=1, bias=False, dilation = 1) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))		
 
         self.conv3 = nn.Sequential(
                 nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False) ,
-                nn.BatchNorm2d(planes * 4,affine = affine_par))					
+                nn.GroupNorm(8, planes* 4))					
 		
         self.relu = nn.ReLU(inplace=True)		
 		
@@ -198,44 +198,27 @@ class Res_block_3(nn.Module):
 		
         self.conv1 = nn.Sequential(
                 nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride, bias=False) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))	
 				
         self.conv2 = nn.Sequential(
                 nn.Conv2d(planes, planes, kernel_size=3, stride=1, 
                                padding=1, bias=False, dilation = 1) ,
-                nn.BatchNorm2d(planes,affine = affine_par),
+                nn.GroupNorm(8, planes),
 				nn.ReLU(inplace=True))		
 
         self.conv3 = nn.Sequential(
                 nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False) ,
-                nn.BatchNorm2d(planes * 4,affine = affine_par))					
+                nn.GroupNorm(8, planes* 4))					
 		
         self.relu = nn.ReLU(inplace=True)			
-		
-        # self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=2, bias=False) # change
-        # self.bn1 = nn.BatchNorm2d(planes,affine = affine_par)
-        # # for i in self.bn1.parameters():
-            # # i.requires_grad = False
-
-        # padding = dilation
-        # self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, # change
-                               # padding=padding, bias=False, dilation = dilation)
-        # self.bn2 = nn.BatchNorm2d(planes,affine = affine_par)
-        # # for i in self.bn2.parameters():
-            # # i.requires_grad = False
-        # self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        # self.bn3 = nn.BatchNorm2d(planes * 4, affine = affine_par)
-        # # for i in self.bn3.parameters():
-            # # i.requires_grad = False
-        # self.relu = nn.ReLU(inplace=True)
 
 
 		
         self.downsample = nn.Sequential(
                 nn.Conv2d(inplanes, planes * 4,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * 4,affine = affine_par))		
+                nn.GroupNorm(8, planes* 4))		
 		
 		
 
@@ -376,17 +359,35 @@ class _CARM(nn.Module):
         super(_CARM, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
-
-        self.fc1   = nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False)
-        self.relu1 = nn.ReLU()
-        self.fc2   = nn.Conv2d(in_planes // ratio, in_planes, 1, bias=False)
+		
+		
+        self.fc1_1   =  nn.Linear(in_planes, in_planes // ratio)
+        self.fc1_2   =  nn.Linear(in_planes // ratio, in_planes)	
+		
+        self.fc2_1   =  nn.Linear(in_planes, in_planes // ratio)
+        self.fc2_2   =  nn.Linear(in_planes // ratio, in_planes)			
+        self.relu = nn.ReLU(True)		
+		
 
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
-        max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
+	
+        avg_out = self.avg_pool(x)
+        avg_out = avg_out.view(avg_out.size(0), -1)
+        avg_out = self.fc1_2(self.relu(self.fc1_1(avg_out)))
+		
+        max_out = self.max_pool(x)
+        max_out = max_out.view(max_out.size(0), -1)		
+        max_out = self.fc2_2(self.relu(self.fc2_1(max_out)))
+		
+        max_out_size = max_out.size()[1]
+        avg_out = torch.reshape(avg_out,(-1, max_out_size, 1, 1 ))	
+        max_out = torch.reshape(max_out,(-1, max_out_size, 1, 1 ))
+		
         out = self.sigmoid(avg_out + max_out)
+		
+	
         x =out*x
         return x
 
@@ -397,34 +398,48 @@ class FSFB_CH(nn.Module):
         super(FSFB_CH, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
+		
+        self.fc1_1   =  nn.Linear(in_planes, in_planes // ratio)
+        self.fc1_2   =  nn.Linear(in_planes // ratio, num*in_planes)	
+		
+        self.fc2_1   =  nn.Linear(in_planes, in_planes // ratio)
+        self.fc2_2   =  nn.Linear(in_planes // ratio, num*in_planes)			
+        self.relu = nn.ReLU(True)	
 
-        self.fc1_1   = nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False)
-        self.relu1 = nn.ReLU(True)
-        self.fc2_1   = nn.Conv2d(in_planes // ratio, num*in_planes, 1, bias=False)
-		
-        self.fc1_2   = nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False)
-        self.fc2_2   = nn.Conv2d(in_planes // ratio, num*in_planes, 1, bias=False)
-		
-        self.fc3   = nn.Conv2d(num*in_planes, 2*num*in_planes, 1, bias=False)		
-        self.fc4   = nn.Conv2d(2*num*in_planes, 2*num*in_planes, 1, bias=False)
-        self.fc5   = nn.Conv2d(2*num*in_planes, num*in_planes, 1, bias=False)	
+        self.fc3   = nn.Linear(num*in_planes, 2*num*in_planes)		
+        self.fc4   = nn.Linear(2*num*in_planes, 2*num*in_planes)
+        self.fc5   = nn.Linear(2*num*in_planes, num*in_planes)			
+
 		
         self.softmax = nn.Softmax(dim=3)
 
     def forward(self, x, num):
-        avg_out = self.fc2_1(self.relu1(self.fc1_1(self.avg_pool(x))))
-        max_out = self.fc2_2(self.relu1(self.fc1_2(self.max_pool(x))))
-        out = avg_out + max_out
-        out = self.relu1(self.fc3(out))		
-        out = self.relu1(self.fc4(out))	
-        out = self.relu1(self.fc5(out))  # (N, num*in_planes, 1, 1)
+	
+        avg_out = self.avg_pool(x)
+        avg_out = avg_out.view(avg_out.size(0), -1)
+        avg_out = self.fc1_2(self.relu(self.fc1_1(avg_out)))
+		
+        max_out = self.max_pool(x)
+        max_out = max_out.view(max_out.size(0), -1)		
+        max_out = self.fc2_2(self.relu(self.fc2_1(max_out)))
+		
+		
+        out = avg_out + max_out	
+        out = self.relu(self.fc3(out))		
+        out = self.relu(self.fc4(out))	
+        out = self.relu(self.fc5(out))  # (N, num*in_planes)		
 		
         out_size = out.size()[1]
         out = torch.reshape(out,(-1, out_size//num, 1, num ))	 # (N, in_planes, 1, num )	
         out = self.softmax(out)
 		
-        channel_scale = torch.chunk(out, num, dim=3)	# (N, in_planes, 1, 1 ) 	
-        return channel_scale   
+        channel_scale = torch.chunk(out, num, dim=3)	# (N, in_planes, 1, 1 )
+
+        return channel_scale  		
+	
+
+
+ 
 		
 		
 		
@@ -566,7 +581,7 @@ class CDnetV2_MODEL(nn.Module):
 		
         self.layerx_1 = Res_block_1(64, 64, stride=1, dilation=1)
         self.layerx_2 = Res_block_2(256, 64, stride=1, dilation=1)
-        self.layerx_3 = Res_block_3(256, 64, stride=1, dilation=1)	
+        self.layerx_3 = Res_block_3(256, 64, stride=2, dilation=1)	
 		
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
