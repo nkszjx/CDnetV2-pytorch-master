@@ -1,4 +1,4 @@
-"""Pyramid Scene Parsing Network"""
+"""Cloud detection Network"""
 
 """
 This is the implementation of CDnetV2 without multi-scale inputs. This implementation uses ResNet by default.
