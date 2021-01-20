@@ -1,7 +1,7 @@
 """Pyramid Scene Parsing Network"""
 
 """
-This is the implementation of DeepLabv3+ without multi-scale inputs. This implementation uses ResNet-101 by default.
+This is the implementation of CDnetV2 without multi-scale inputs. This implementation uses ResNet by default.
 """
 #nn.GroupNorm
 
